@@ -239,6 +239,7 @@ class ModelRunner:
         self._model_update_group = {}
 
     def initialize(self, min_per_gpu_memory: float):
+        print("[debug] test sglang patch")
         server_args = self.server_args
 
         self.memory_saver_adapter = TorchMemorySaverAdapter.create(
