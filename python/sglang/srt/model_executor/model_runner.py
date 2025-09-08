@@ -253,7 +253,7 @@ class ModelRunner:
         self._model_update_group = {}
 
     def initialize(self, min_per_gpu_memory: float):
-        print("[Debug] SGLang v0.5.1.post1 is patched with customized weight loading.")
+        print("[Debug] SGLang v0.5.1.post1 is patched with customized weight loading.", flush=True)
         server_args = self.server_args
 
         self.memory_saver_adapter = TorchMemorySaverAdapter.create(
@@ -778,7 +778,7 @@ class ModelRunner:
         self.model_config.model_path = model_path
         load_config = LoadConfig(load_format=load_format)
 
-        print(f"[Debug] `update_weights_from_disk` from model_path={model_path}")
+        print(f"[Debug] `update_weights_from_disk` from model_path={model_path}", flush=True)
         tik = time.perf_counter()
         # Only support DefaultModelLoader for now
         loader = get_model_loader(load_config)
@@ -815,7 +815,7 @@ class ModelRunner:
                 return False, message
         
         tok = time.perf_counter()
-        print(f"[Debug] `update_weights_from_disk` finished in {tok - tik:.2f} seconds")
+        print(f"[Debug] `update_weights_from_disk` finished in {tok - tik:.2f} seconds", flush=True)
 
         self.model = model
         self.server_args.model_path = model_path
