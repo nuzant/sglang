@@ -376,6 +376,9 @@ class Qwen3ForCausalLM(nn.Module):
         return self.model.end_layer
 
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
+        import time
+        logger.info("[Debug] `Qwen3ForCausalLM.load_weights` starts")
+        tik = time.perf_counter()
         stacked_params_mapping = [
             # (param_name, shard_name, shard_id)
             ("qkv_proj", "q_proj", "q"),
@@ -443,6 +446,9 @@ class Qwen3ForCausalLM(nn.Module):
                     weight_loader(param, loaded_weight)
                 else:
                     logger.warning(f"Parameter {name} not found in params_dict")
+
+        tok = time.perf_counter()
+        logger.info(f"[Debug] `Qwen3ForCausalLM.load_weights` finished in {tok - tik:.2f} seconds")
 
     def get_embed_and_head(self):
         return self.model.embed_tokens.weight, self.lm_head.weight
