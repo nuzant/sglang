@@ -353,7 +353,7 @@ class DefaultModelLoader(BaseModelLoader):
         self, source: "Source"
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
         """Get an iterator for the model weights based on the load format."""
-        logger.info(f"[Debug] `DefaultModelLoader._get_weights_iterator` from model_or_path={source.model_or_path}")
+        print(f"[Debug] `DefaultModelLoader._get_weights_iterator` from model_or_path={source.model_or_path}")
         tik = time.perf_counter()
         extra_config = self.load_config.model_loader_extra_config
         hf_folder, hf_weights_files, use_safetensors = self._prepare_weights(
@@ -400,7 +400,7 @@ class DefaultModelLoader(BaseModelLoader):
                 weights_iterator = pt_weights_iterator(hf_weights_files)
         
         tok = time.perf_counter()
-        logger.info(f"[Debug] `DefaultModelLoader._get_weights_iterator` finished in {tok - tik:.2f} seconds")
+        print(f"[Debug] `DefaultModelLoader._get_weights_iterator` finished in {tok - tik:.2f} seconds")
         # Apply the prefix.
         return ((source.prefix + name, tensor) for (name, tensor) in weights_iterator)
 
@@ -430,7 +430,7 @@ class DefaultModelLoader(BaseModelLoader):
         model_config: ModelConfig,
         device_config: DeviceConfig,
     ) -> nn.Module:
-        logger.info(f"[Debug] `DefaultModelLoader.load_model` from model_path={model_config.model_path}")
+        print(f"[Debug] `DefaultModelLoader.load_model` from model_path={model_config.model_path}")
         tik = time.perf_counter()
 
         target_device = torch.device(device_config.device)
@@ -445,12 +445,12 @@ class DefaultModelLoader(BaseModelLoader):
             model, self._get_all_weights(model_config, model), target_device
         )
         tok = time.perf_counter()
-        logger.info(f"[Debug] `DefaultModelLoader.load_model` finished in {tok - tik:.2f} seconds")
+        print(f"[Debug] `DefaultModelLoader.load_model` finished in {tok - tik:.2f} seconds")
         return model.eval()
 
     @staticmethod
     def load_weights_and_postprocess(model, weights, target_device):
-        logger.info(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts")
+        print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts")
         tik = time.perf_counter()
         model.load_weights(weights)
 
@@ -466,7 +466,7 @@ class DefaultModelLoader(BaseModelLoader):
                     quant_method.process_weights_after_loading(module)
 
         tok = time.perf_counter()
-        logger.info(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` finished in {tok - tik:.2f} seconds")
+        print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` finished in {tok - tik:.2f} seconds")
 
 class LayeredModelLoader(DefaultModelLoader):
     """Model loader that loads weights layer by layer so that one can quantize a

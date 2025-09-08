@@ -773,7 +773,7 @@ class Qwen3MoeForCausalLM(nn.Module):
 
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
         import time
-        logger.info("[Debug] `Qwen3MoeForCausalLM.load_weights` starts")
+        print("[Debug] `Qwen3MoeForCausalLM.load_weights` starts")
         tik = time.perf_counter()
 
         stacked_params_mapping = [
@@ -870,7 +870,7 @@ class Qwen3MoeForCausalLM(nn.Module):
         }
 
         tok = time.perf_counter()
-        logger.info(
+        print(
             f"[Debug] `Qwen3MoeForCausalLM.load_weights` ends, time cost: {tok - tik:.2f} seconds"
         )
 
