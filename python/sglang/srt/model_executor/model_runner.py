@@ -779,7 +779,7 @@ class ModelRunner:
         load_config = LoadConfig(
             load_format=load_format,
             # XXX: This should be in function args, passed in by requests
-            model_loader_extra_config=self.server_args.model_loader_extra_config
+            model_loader_extra_config=self.server_args.model_loader_extra_config,
         )
 
         print(f"[Debug] `update_weights_from_disk` from model_path={model_path}", flush=True)
