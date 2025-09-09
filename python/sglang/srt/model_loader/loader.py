@@ -463,7 +463,7 @@ class DefaultModelLoader(BaseModelLoader):
 
         extra_config = load_config.model_loader_extra_config
         if extra_config and extra_config.get("enable_fast_load"):
-            model.load_weights_from_path()
+            model.load_weights_from_path(weights) # here `weights` is model path
         else:
             model.load_weights(weights)
 
