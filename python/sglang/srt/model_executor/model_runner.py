@@ -776,7 +776,11 @@ class ModelRunner:
 
         target_device = torch.device(self.device)
         self.model_config.model_path = model_path
-        load_config = LoadConfig(load_format=load_format)
+        load_config = LoadConfig(
+            load_format=load_format,
+            # XXX: This should be in function args, passed in by requests
+            model_loader_extra_config=self.server_args.model_loader_extra_config
+        )
 
         print(f"[Debug] `update_weights_from_disk` from model_path={model_path}", flush=True)
         tik = time.perf_counter()

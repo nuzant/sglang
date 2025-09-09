@@ -414,7 +414,89 @@ class Qwen3ForCausalLM(nn.Module):
     @property
     def end_layer(self):
         return self.model.end_layer
+    
+    @property
+    def stacked_params_mapping(self) -> List[Tuple[str, str, str]]:
+        return [
+            # (param_name, shard_name, shard_id)
+            ("qkv_proj", "q_proj", "q"),
+            ("qkv_proj", "k_proj", "k"),
+            ("qkv_proj", "v_proj", "v"),
+            ("gate_up_proj", "gate_proj", 0),
+            ("gate_up_proj", "up_proj", 1),
+        ]
+    
+    def _load_weights_with_worker(
+        self,
+        params: Dict[str, torch.nn.Parameter],
+        local_names: List[str],
+        filenames: List[str],
+        weight_path: str,
+    ):
+        import os
+        from sglang.srt.model_loader.weight_utils import default_weight_loader
+        from safetensors import safe_open
+        all_slices = {}
+        for filename in filenames:
+            safetensor_file = os.path.join(weight_path, filename)
+            with safe_open(safetensor_file, framework="pt", device="cpu") as f:
+                for name in f.keys():
+                    all_slices[name] = f.get_slice(name)
 
+        for local_name in local_names:
+            # Skip loading extra bias for GPTQ models.
+            if local_name.endswith(".bias") and local_name not in params:
+                continue
+            # Handle special cases
+            if "rotary_emb.inv_freq" in local_name or "projector" in local_name:
+                continue
+            if "rotary_emb.cos_cached" in local_name or "rotary_emb.sin_cached" in local_name:
+                # Models trained using ColossalAI may include these tensors in
+                # the checkpoint. Skip them.
+                continue
+            if local_name.startswith("model.vision_tower") and local_name not in params:
+                continue
+
+            param = params[local_name]
+            # Handle weight tying
+            if self.config.tie_word_embeddings and "lm_head.weight" in local_name:
+                if self.pp_group.world_size > 1 and self.pp_group.is_last_rank:
+                    local_name = "model.embed_tokens.weight"
+
+            for param_name, shard_name, shard_id in self.stacked_params_mapping:
+                if param_name in local_name:
+                    continue
+                # If local_name weight is sharded into multiple keys
+                weight_loader = param.weight_loader
+                slice_name = name.replace(param_name, shard_name)
+                loaded_weight = all_slices[slice_name]
+                weight_loader(param, loaded_weight, shard_id)
+            else:
+                # If local_name weight is not sharded
+                if local_name in all_slices:
+                    loaded_weight = all_slices[local_name]
+                    weight_loader = getattr(
+                        param, "weight_loader", default_weight_loader
+                    )
+                    weight_loader(param, loaded_weight)
+                else:
+                    raise KeyError(f"Cannot find weight {local_name} in the loaded slices.")
+    
+    def load_weights_from_path(self, path: str):
+        # Customized weights loading from a given path of huggingface model
+        import time
+        from sglang.srt.models.utils.load import load_weights_with_hf_path_fast
+        print("[Debug] `Qwen3ForCausalLM.load_weights_from_path_fast` starts", flush=True)
+        tik = time.perf_counter()
+        load_weights_with_hf_path_fast(
+            model=self,
+            weight_path=path,
+            load_weights_with_worker_fn=self._load_weights_with_worker,
+            stacked_params_mapping=self.stacked_params_mapping,
+        )
+        tok = time.perf_counter()
+        print(f"[Debug] `Qwen3ForCausalLM.load_weights_from_path_fast` finished in {tok - tik:.2f} seconds", flush=True)
+        
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
         import time
         print("[Debug] `Qwen3ForCausalLM.load_weights` starts", flush=True)
