@@ -106,7 +106,7 @@ def load_weights_with_hf_path_fast(
                 params=params,
                 local_names=local_names,
                 filenames=filenames,
-                weights_path=weight_path,
+                weight_path=weight_path,
             )
         )
 
