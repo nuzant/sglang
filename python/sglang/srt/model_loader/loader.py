@@ -401,6 +401,8 @@ class DefaultModelLoader(BaseModelLoader):
         print(f"[Debug] `DefaultModelLoader._get_weights_iterator` from model_or_path={source.model_or_path}", flush=True)
         tik = time.perf_counter()
         extra_config = self.load_config.model_loader_extra_config
+        print(f"[Debug] Using multithread: {extra_config.get("enable_multithread_load")}", flush=True)
+        print(f"[Debug] Using fast load: {extra_config.get("enable_fast_load")}", flush=True)
         if extra_config.get("enable_fast_load"):
             return source.model_or_path
         
