@@ -233,7 +233,7 @@ class DefaultModelLoader(BaseModelLoader):
     def __init__(self, load_config: LoadConfig):
         super().__init__(load_config)
         extra_config = load_config.model_loader_extra_config
-        allowed_keys = {"enable_multithread_load", "num_threads"}
+        allowed_keys = {"enable_multithread_load", "num_threads", "enable_fast_load"}
         unexpected_keys = set(extra_config.keys()) - allowed_keys
 
         if unexpected_keys:
@@ -356,6 +356,9 @@ class DefaultModelLoader(BaseModelLoader):
         print(f"[Debug] `DefaultModelLoader._get_weights_iterator` from model_or_path={source.model_or_path}", flush=True)
         tik = time.perf_counter()
         extra_config = self.load_config.model_loader_extra_config
+        if extra_config.get("enable_fast_load"):
+            return source.model_or_path
+        
         hf_folder, hf_weights_files, use_safetensors = self._prepare_weights(
             source.model_or_path, source.revision, source.fall_back_to_pt
         )
@@ -409,6 +412,9 @@ class DefaultModelLoader(BaseModelLoader):
         model_config: ModelConfig,
         model: nn.Module,
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
+        extra_config = self.load_config.model_loader_extra_config
+        if extra_config.get("enable_fast_load"):
+            return model_config.model_path
 
         primary_weights = DefaultModelLoader.Source.init_new(model_config, model)
         yield from self._get_weights_iterator(primary_weights)
@@ -452,7 +458,12 @@ class DefaultModelLoader(BaseModelLoader):
     def load_weights_and_postprocess(model, weights, target_device):
         print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts", flush=True)
         tik = time.perf_counter()
-        model.load_weights(weights)
+
+        extra_config = model.load_config.model_loader_extra_config
+        if extra_config and extra_config.get("enable_fast_load"):
+            model.load_weights_from_path()
+        else:
+            model.load_weights(weights)
 
         for _, module in model.named_modules():
             quant_method = getattr(module, "quant_method", None)
