@@ -21,6 +21,7 @@ def load_weights_with_hf_path_fast(
     weight_path: str, 
     load_weights_with_worker_fn: Callable,
     stacked_params_mapping: List[Tuple[str, str, str]],
+    max_workers: int = None,
 ):
     if not os.path.exists(weight_path):
         weight_path = get_actual_hf_path(weight_path)
