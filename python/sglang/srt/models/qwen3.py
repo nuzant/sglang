@@ -472,7 +472,7 @@ class Qwen3ForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}' flush=True)
+                print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
             else:
