@@ -450,18 +450,18 @@ class DefaultModelLoader(BaseModelLoader):
                 )
 
         self.load_weights_and_postprocess(
-            model, self._get_all_weights(model_config, model), target_device
+            model, self._get_all_weights(model_config, model), target_device, self.load_config
         )
         tok = time.perf_counter()
         print(f"[Debug] `DefaultModelLoader.load_model` finished in {tok - tik:.2f} seconds", flush=True)
         return model.eval()
 
     @staticmethod
-    def load_weights_and_postprocess(model, weights, target_device):
+    def load_weights_and_postprocess(model, weights, target_device, load_config):
         print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts", flush=True)
         tik = time.perf_counter()
 
-        extra_config = model.load_config.model_loader_extra_config
+        extra_config = load_config.model_loader_extra_config
         if extra_config and extra_config.get("enable_fast_load"):
             model.load_weights_from_path()
         else:
