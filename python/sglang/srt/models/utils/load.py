@@ -20,7 +20,8 @@ def load_weights_with_hf_path_fast(
     model: torch.nn.Module, 
     weight_path: str, 
     load_weights_with_worker_fn: Callable,
-    stacked_params_mapping: List[Tuple[str, str, str]],
+    stacked_params_mapping: List[Tuple[str, str, str]] | None = None,
+    expert_params_mapping: List[Tuple[str, str, str]] | None = None,
     max_workers: int = None,
 ):
     if not os.path.exists(weight_path):
@@ -52,9 +53,14 @@ def load_weights_with_hf_path_fast(
     local_to_file_map = defaultdict(list)
     for local_name in local_names:
         hf_names = []
-        for param_name, shard_name, _ in stacked_params_mapping:
-            if param_name in local_name:
-                hf_names.append(local_name.replace(param_name, shard_name))
+        if stacked_params_mapping is not None:
+            for param_name, shard_name, _ in stacked_params_mapping:
+                if param_name in local_name:
+                    hf_names.append(local_name.replace(param_name, shard_name))
+        if expert_params_mapping is not None:
+            for param_name, shard_name, _, _ in expert_params_mapping:
+                if param_name in local_name:
+                    hf_names.append(local_name.replace(param_name, shard_name))
         for name in hf_names:
             filename = index[name]
             if filename not in local_to_file_map[local_name]:
