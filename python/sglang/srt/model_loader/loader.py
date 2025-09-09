@@ -460,6 +460,7 @@ class DefaultModelLoader(BaseModelLoader):
         model: nn.Module,
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
         extra_config = self.load_config.model_loader_extra_config
+        print(f"[Debug] `DefaultModelLoader._get_all_weights` extra_config={extra_config}", flush=True)
         if extra_config.get("enable_fast_load"):
             print("[Debug] `DefaultModelLoader._get_all_weights` using fast load", flush=True)
             return model_config.model_path
@@ -510,7 +511,7 @@ class DefaultModelLoader(BaseModelLoader):
         tik = time.perf_counter()
 
         extra_config = load_config.model_loader_extra_config
-        if extra_config and extra_config.get("enable_fast_load"):
+        if extra_config.get("enable_fast_load"):
             model.load_weights_from_path(weights)
         else:
             model.load_weights(weights)
