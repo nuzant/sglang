@@ -441,7 +441,8 @@ class Qwen3ForCausalLM(nn.Module):
             safetensor_file = os.path.join(weight_path, filename)
             with safe_open(safetensor_file, framework="pt", device="cpu") as f:
                 for name in f.keys():
-                    all_slices[name] = f.get_slice(name)
+                    # all_slices[name] = f.get_slice(name)
+                    all_slices[name] = f.get_tensor(name)
 
         for local_name in local_names:
             # Skip loading extra bias for GPTQ models.
