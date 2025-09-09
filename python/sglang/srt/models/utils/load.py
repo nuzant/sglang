@@ -103,7 +103,6 @@ def load_weights_with_hf_path_fast(
     for local_names, filenames in zip(grouped_local_names, grouped_filenames):
         worker_args.append(
             dict(
-                self=model,
                 params=params,
                 local_names=local_names,
                 filenames=filenames,
