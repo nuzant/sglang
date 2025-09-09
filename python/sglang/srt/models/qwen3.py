@@ -466,6 +466,7 @@ class Qwen3ForCausalLM(nn.Module):
                 if self.pp_group.world_size > 1 and self.pp_group.is_last_rank:
                     local_name = "model.embed_tokens.weight"
 
+            loaded = False
             for param_name, shard_name, shard_id in self.stacked_params_mapping:
                 if param_name not in local_name:
                     continue
@@ -475,7 +476,9 @@ class Qwen3ForCausalLM(nn.Module):
                 print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
-            else:
+                loaded = True
+            
+            if not loaded:
                 # If local_name weight is not sharded
                 if local_name in all_slices:
                     print(f'[Debug] Loading weight, local_name={local_name}', flush=True)
