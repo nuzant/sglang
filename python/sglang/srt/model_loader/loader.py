@@ -461,8 +461,9 @@ class DefaultModelLoader(BaseModelLoader):
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
         extra_config = self.load_config.model_loader_extra_config
         if extra_config.get("enable_fast_load"):
+            print("[Debug] `DefaultModelLoader._get_all_weights` using fast load", flush=True)
             return model_config.model_path
-
+        
         primary_weights = DefaultModelLoader.Source.init_new(model_config, model)
         yield from self._get_weights_iterator(primary_weights)
 
@@ -494,21 +495,23 @@ class DefaultModelLoader(BaseModelLoader):
                     self.load_config,
                 )
 
+        weights_iter_or_path = self._get_all_weights(model_config, model)
+        print(f"[Debug] weights_iter_or_path={weights_iter_or_path}", flush=True)
         self.load_weights_and_postprocess(
-            model, self._get_all_weights(model_config, model), target_device, self.load_config
+            model, weights_iter_or_path, target_device, load_config=self.load_config
         )
         tok = time.perf_counter()
         print(f"[Debug] `DefaultModelLoader.load_model` finished in {tok - tik:.2f} seconds", flush=True)
         return model.eval()
 
     @staticmethod
-    def load_weights_and_postprocess(model, weights, target_device, load_config):
+    def load_weights_and_postprocess(model, weights, target_device, load_config=None):
         print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts", flush=True)
         tik = time.perf_counter()
 
         extra_config = load_config.model_loader_extra_config
         if extra_config and extra_config.get("enable_fast_load"):
-            model.load_weights_from_path(weights) # here `weights` is model path
+            model.load_weights_from_path(weights)
         else:
             model.load_weights(weights)
 
