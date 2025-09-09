@@ -22,7 +22,8 @@ def load_weights_with_hf_path_fast(
     load_weights_with_worker_fn: Callable,
     stacked_params_mapping: List[Tuple[str, str, str]],
 ):
-    weight_path = get_actual_hf_path(weight_path)
+    if not os.path.exists(weight_path):
+        weight_path = get_actual_hf_path(weight_path)
     index_file = os.path.join(weight_path, "model.safetensors.index.json")
     index = {}
     if os.path.exists(index_file):
