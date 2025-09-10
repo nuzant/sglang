@@ -808,7 +808,7 @@ class Qwen3MoeForCausalLM(nn.Module):
                     # all_slices[name] = f.get_slice(name)
                     all_slices[name] = f.get_tensor(name)
 
-        print(f"[Debug] expert_param_mappings={self.expert_params_mapping}", flush=True)
+        # print(f"[Debug] expert_param_mappings={self.expert_params_mapping}", flush=True)
 
         print(f"[Debug] Slice names={list(all_slices.keys())}", flush=True)
         print(f"[Debug] Local names={local_names}", flush=True)
