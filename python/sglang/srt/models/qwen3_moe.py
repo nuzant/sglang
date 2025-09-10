@@ -848,12 +848,12 @@ class Qwen3MoeForCausalLM(nn.Module):
                 weight_loader(param, loaded_weight, shard_id)
                 loaded = True
             
-            for param_name, weight_name, expert_id, shard_id in self.expert_params_mapping:
+            for param_name, shard_name, expert_id, shard_id in self.expert_params_mapping:
                 if param_name not in local_name:
                     continue
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
-                slice_name = local_name.replace(weight_name, param_name)
+                slice_name = local_name.replace(param_name, shard_name)
                 print(f'[Debug] Loading expert weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(
