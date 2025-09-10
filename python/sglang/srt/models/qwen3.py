@@ -472,20 +472,20 @@ class Qwen3ForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                print(f'[Debug] Loading sharded weight, loading {slice_name} into {local_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
+                print(f'[Debug] Loading sharded weight, loading {slice_name} shape={loaded_weight.shape} into {local_name} shape={param.shape}', flush=True)
                 loaded = True
             
             if not loaded:
                 # If local_name weight is not sharded
                 if local_name in all_slices:
-                    print(f'[Debug] Loading weight, loading {local_name} into {local_name}', flush=True)
                     loaded_weight = all_slices[local_name]
                     weight_loader = getattr(
                         param, "weight_loader", default_weight_loader
                     )
                     weight_loader(param, loaded_weight)
+                    print(f'[Debug] Loading weight, loading {local_name} shape={loaded_weight.shape} into {local_name} shape={param.shape}', flush=True)
                 else:
                     raise KeyError(f"Cannot find weight {local_name} in the loaded slices.")
     
@@ -562,7 +562,7 @@ class Qwen3ForCausalLM(nn.Module):
                 param = params_dict[_name]
                 weight_loader = param.weight_loader
                 weight_loader(param, loaded_weight, shard_id)
-                print(f"[Debug] Loaded sharded weight, {name} into {_name}, shard_id={shard_id}", flush=True)
+                print(f"[Debug] Loaded sharded weight, {name} shape={loaded_weight.shape} into {_name} shape={param.shape}, shard_id={shard_id}", flush=True)
                 break
             else:
                 # Skip loading extra bias for GPTQ models.
@@ -576,7 +576,7 @@ class Qwen3ForCausalLM(nn.Module):
                     )
                     weight_loader(param, loaded_weight)
                     
-                    print(f"[Debug] Loaded sharded weight, {name} into {name}, shard_id={shard_id}", flush=True)
+                    print(f"[Debug] Loaded sharded weight, {name} shape={loaded_weight.shape} into {name} shape={param.shape}, shard_id={shard_id}", flush=True)
                 else:
                     logger.warning(f"Parameter {name} not found in params_dict")
                     print(f"[Debug] Parameter {name} not found in params_dict", flush=True)
