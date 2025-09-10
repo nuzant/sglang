@@ -569,14 +569,14 @@ class Qwen3ForCausalLM(nn.Module):
                 if name.endswith(".bias") and name not in params_dict:
                     continue
 
-                if _name in params_dict.keys():
-                    param = params_dict[_name]
+                if name in params_dict.keys():
+                    param = params_dict[name]
                     weight_loader = getattr(
                         param, "weight_loader", default_weight_loader
                     )
                     weight_loader(param, loaded_weight)
                     
-                    print(f"[Debug] Loaded sharded weight, {name} into {_name}, shard_id={shard_id}", flush=True)
+                    print(f"[Debug] Loaded sharded weight, {name} into {name}, shard_id={shard_id}", flush=True)
                 else:
                     logger.warning(f"Parameter {name} not found in params_dict")
                     print(f"[Debug] Parameter {name} not found in params_dict", flush=True)
