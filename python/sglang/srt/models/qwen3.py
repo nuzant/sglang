@@ -500,6 +500,7 @@ class Qwen3ForCausalLM(nn.Module):
             weight_path=path,
             load_weights_with_worker_fn=self._load_weights_with_worker,
             stacked_params_mapping=self.stacked_params_mapping,
+            tie_word_embeddings=self.config.tie_word_embeddings,
         )
         tok = time.perf_counter()
         print(f"[Debug] `Qwen3ForCausalLM.load_weights_from_path_fast` finished in {tok - tik:.2f} seconds", flush=True)
