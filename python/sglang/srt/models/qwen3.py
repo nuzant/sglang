@@ -405,7 +405,6 @@ class Qwen3ForCausalLM(nn.Module):
                     all_slices[name] = f.get_tensor(name)
 
         for local_name in local_names:
-            print(f"[Debug] loading into {local_name}", flush=True)
             # Skip loading extra bias for GPTQ models.
             if local_name.endswith(".bias") and local_name not in params:
                 continue
@@ -434,7 +433,6 @@ class Qwen3ForCausalLM(nn.Module):
                 slice_name = local_name.replace(param_name, shard_name)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
-                print(f'[Debug] Loading sharded weight, loading {slice_name} shape={loaded_weight.shape} into {local_name} shape={param.shape}', flush=True)
                 loaded = True
             
             if not loaded:
@@ -445,7 +443,6 @@ class Qwen3ForCausalLM(nn.Module):
                         param, "weight_loader", default_weight_loader
                     )
                     weight_loader(param, loaded_weight)
-                    print(f'[Debug] Loading weight, loading {local_name} shape={loaded_weight.shape} into {local_name} shape={param.shape}', flush=True)
                 else:
                     raise KeyError(f"Cannot find weight {local_name} in the loaded slices.")
     
@@ -480,7 +477,6 @@ class Qwen3ForCausalLM(nn.Module):
 
         params_dict = dict(self.named_parameters())
         for name, loaded_weight in weights:
-            print(f"[Debug] loading from {name}", flush=True)
             if "Embedding" in self.config.name_or_path:
                 name = add_prefix(name, "model")
             layer_id = get_layer_id(name)
@@ -523,7 +519,6 @@ class Qwen3ForCausalLM(nn.Module):
                 param = params_dict[_name]
                 weight_loader = param.weight_loader
                 weight_loader(param, loaded_weight, shard_id)
-                print(f"[Debug] Loaded sharded weight, {name} shape={loaded_weight.shape} into {_name} shape={param.shape}, shard_id={shard_id}", flush=True)
                 break
             else:
                 # Skip loading extra bias for GPTQ models.
@@ -536,12 +531,9 @@ class Qwen3ForCausalLM(nn.Module):
                         param, "weight_loader", default_weight_loader
                     )
                     weight_loader(param, loaded_weight)
-                    
-                    print(f"[Debug] Loaded sharded weight, {name} shape={loaded_weight.shape} into {name} shape={param.shape}, shard_id={shard_id}", flush=True)
                 else:
                     logger.warning(f"Parameter {name} not found in params_dict")
-                    print(f"[Debug] Parameter {name} not found in params_dict", flush=True)
-
+        
         tok = time.perf_counter()
         print(f"[Debug] `Qwen3ForCausalLM.load_weights` finished in {tok - tik:.2f} seconds", flush=True)
 
