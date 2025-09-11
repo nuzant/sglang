@@ -81,47 +81,90 @@ def load_weights_with_hf_path_fast(
     # weight_names = list(weight_files.keys())
     
     # Build adjacency graph: weight_names that share files are connected
-    conflicts = {}
-    for weight in local_names:
-        conflicts[weight] = set()
+    # conflicts = {}
+    # for weight in local_names:
+    #     conflicts[weight] = set()
+
+    # Use union find to create local_name groups with no file conflicts
+    parent = {name: name for name in local_names}
+    weight_groups = {name: [name] for name in local_names}
+    file_groups = {name: local_to_file_map[name] for name in local_names}
+    roots = [name for name in local_names]
+    ranks = {name: 0 for name in local_names}
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
     
+    def union(x, y):
+        root_x = find(x)
+        root_y = find(y)
+        if root_x != root_y:
+            if ranks[root_x] > ranks[root_y]:
+                parent[root_y] = root_x
+                roots.remove(root_y)
+            elif ranks[root_x] < ranks[root_y]:
+                parent[root_x] = root_y
+                roots.remove(root_x)
+            else:
+                parent[root_y] = root_x
+                roots.remove(root_y)
+                ranks[root_x] += 1
+            # Merge file groups
+            file_groups[root_x].update(file_groups[root_y])
+            file_groups[root_y] = file_groups[root_x]
+            # Merge weight groups
+            weight_groups[root_x].extend(weight_groups[root_y])
+            weight_groups[root_y] = weight_groups[root_x]
+            return True
+        return False
+
     for i, weight1 in enumerate(local_names):
         for weight2 in local_names[i+1:]:
             # If two weights share any files, they conflict
-            if local_to_file_map[weight1] & local_to_file_map[weight2]:
-                conflicts[weight1].add(weight2)
-                conflicts[weight2].add(weight1)
+            if any(fn in file_groups[weight1] for fn in file_groups[weight2]):
+                union(weight1, weight2)
+                    
+    grouped_local_names = [weight_groups[root] for root in roots]
+    grouped_filenames = [list(file_groups[root]) for root in roots]
     
-    # Greedy graph coloring algorithm
-    grouped_local_names = []
-    assigned = set()
+    # for i, weight1 in enumerate(local_names):
+    #     for weight2 in local_names[i+1:]:
+    #         # If two weights share any files, they conflict
+    #         if local_to_file_map[weight1] & local_to_file_map[weight2]:
+    #             conflicts[weight1].add(weight2)
+    #             conflicts[weight2].add(weight1)
     
-    for weight in local_names:
-        if weight in assigned:
-            continue
+    # # Greedy graph coloring algorithm
+    # grouped_local_names = []
+    # assigned = set()
+    
+    # for weight in local_names:
+    #     if weight in assigned:
+    #         continue
             
-        # Try to add to existing group
-        placed = False
-        for group in grouped_local_names:
-            # Check if weight conflicts with any member of this group
-            if not any(member in conflicts[weight] for member in group):
-                group.append(weight)
-                assigned.add(weight)
-                placed = True
-                break
+    #     # Try to add to existing group
+    #     placed = False
+    #     for group in grouped_local_names:
+    #         # Check if weight conflicts with any member of this group
+    #         if not any(member in conflicts[weight] for member in group):
+    #             group.append(weight)
+    #             assigned.add(weight)
+    #             placed = True
+    #             break
         
-        # If couldn't place in existing group, create new group
-        if not placed:
-            grouped_local_names.append([weight])
-            assigned.add(weight)
+    #     # If couldn't place in existing group, create new group
+    #     if not placed:
+    #         grouped_local_names.append([weight])
+    #         assigned.add(weight)
 
-    # Map each group to the union of their required files
-    grouped_filenames = []
-    for group in grouped_local_names:
-        files = set()
-        for weight in group:
-            files.update(local_to_file_map[weight])
-        grouped_filenames.append(list(files))
+    # # Map each group to the union of their required files
+    # grouped_filenames = []
+    # for group in grouped_local_names:
+    #     files = set()
+    #     for weight in group:
+    #         files.update(local_to_file_map[weight])
+    #     grouped_filenames.append(list(files))
 
     # Allocate local weight name into bins, where each bin access independent files
     # Then we can use multiple threads to concurrently load each bin's parameters
@@ -177,9 +220,9 @@ def load_weights_with_hf_path_fast(
 
 
     for local_names, filenames in zip(grouped_local_names, grouped_filenames):
-        for local_name in local_names:
-            if "model.layers.31.mlp.experts" in local_name:
-                print(f"[Debug] Final local_names for bin: {local_names}, filenames for bin: {filenames}")
+        # for local_name in local_names:
+        #     if "model.layers.31.mlp.experts" in local_name:
+        #         print(f"[Debug] Final local_names for bin: {local_names}, filenames for bin: {filenames}")
         worker_args.append(
             dict(
                 params=params,
