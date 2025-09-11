@@ -109,6 +109,9 @@ def load_weights_with_hf_path_fast(
                         if i in weight_name_bins:
                             weight_name_bins[head_i] += weight_name_bins.pop(i)
                         file_name_to_bin_index[filename] = head_i
+    
+    print(f"[Debug] weight_name_bins={weight_name_bins}")
+    print(f"[Debug] file_name_to_bin_index={file_name_to_bin_index}")
 
     bin_index_to_file_names = defaultdict(list)
     for filename, bin_index in file_name_to_bin_index.items():
@@ -118,6 +121,10 @@ def load_weights_with_hf_path_fast(
     grouped_filenames = list(bin_index_to_file_names[i] for i in weight_name_bins)
 
     print(f"[Debug] len(grouped_local_names) = {len(grouped_local_names)} len(grouped_filenames) = {len(grouped_filenames)}")
+    if max_workers is None:
+        # assume all GPUs are used by SGLang servers
+        max_workers = min(8, max(1, os.cpu_count() // torch.cuda.device_count()))
+
 
     for local_names, filenames in zip(grouped_local_names, grouped_filenames):
         for local_name in local_names:
@@ -132,9 +139,6 @@ def load_weights_with_hf_path_fast(
             )
         )
 
-    if max_workers is None:
-        # assume all GPUs are used by SGLang servers
-        max_workers = min(8, max(1, os.cpu_count() // torch.cuda.device_count()))
     max_workers = min(max_workers, len(worker_args))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = executor.map(
