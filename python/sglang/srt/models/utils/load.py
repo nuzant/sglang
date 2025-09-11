@@ -50,8 +50,8 @@ def load_weights_with_hf_path_fast(
 
     worker_args = []
 
-    # local name -> list of filenames that contains the weight
-    local_to_file_map = defaultdict(list)
+    # local name -> set of filenames that contains the weight
+    local_to_file_map = defaultdict(set)
     # model.layers.31.mlp.experts
     for local_name in local_names:
         hf_names = []
@@ -72,7 +72,7 @@ def load_weights_with_hf_path_fast(
         for name in hf_names:
             filename = index[name]
             if filename not in local_to_file_map[local_name]:
-                local_to_file_map[local_name].append(filename)
+                local_to_file_map[local_name].add(filename)
                 if "model.layers.31.mlp.experts" in local_name:
                     print(f"[Debug] filename for {local_name}: {filename}")
 
@@ -88,7 +88,7 @@ def load_weights_with_hf_path_fast(
             weight_name_bins[bin_index] = [local_name]
             for filename in filenames:
                 if filename in file_name_to_bin_index:
-                    i = file_name_to_bin_index.pop(filename)
+                    i = file_name_to_bin_index.pop(filename) # bin
                     if i in weight_name_bins:
                         weight_name_bins[bin_index] += weight_name_bins.pop(i)
                 file_name_to_bin_index[filename] = bin_index
@@ -116,7 +116,12 @@ def load_weights_with_hf_path_fast(
     grouped_local_names = list(weight_name_bins.values())
     grouped_filenames = list(bin_index_to_file_names[i] for i in weight_name_bins)
 
+    print(f"[Debug] len(grouped_local_names) = {len(grouped_local_names)} len(grouped_filenames) = {len(grouped_filenames)}")
+
     for local_names, filenames in zip(grouped_local_names, grouped_filenames):
+        for local_name in local_names:
+            if "model.layers.31.mlp.experts" in local_name:
+                print(f"[Debug] Final local_names for bin: {local_names}, filenames for bin: {filenames}")
         worker_args.append(
             dict(
                 params=params,
