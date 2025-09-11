@@ -52,6 +52,7 @@ def load_weights_with_hf_path_fast(
 
     # local name -> list of filenames that contains the weight
     local_to_file_map = defaultdict(list)
+    # model.layers.31.mlp.experts
     for local_name in local_names:
         hf_names = []
         if "mlp.experts" not in local_name and stacked_params_mapping is not None:
@@ -66,10 +67,14 @@ def load_weights_with_hf_path_fast(
             hf_names.append("model.embed_tokens.weight")
         if len(hf_names) == 0:
             hf_names.append(local_name)
+        if "model.layers.31.mlp.experts" in local_name:
+            print(f"[Debug] hf_names for {local_name}: {hf_names}")
         for name in hf_names:
             filename = index[name]
             if filename not in local_to_file_map[local_name]:
                 local_to_file_map[local_name].append(filename)
+                if "model.layers.31.mlp.experts" in local_name:
+                    print(f"[Debug] filename for {local_name}: {filename}")
 
     # Allocate local weight name into bins, where each bin access independent files
     # Then we can use multiple threads to concurrently load each bin's parameters
