@@ -842,7 +842,7 @@ class Qwen3MoeForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}', flush=True)
+                # print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
                 loaded = True
@@ -853,7 +853,7 @@ class Qwen3MoeForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                print(f'[Debug] Loading expert weight, local_name={local_name}, slice_name={slice_name}', flush=True)
+                # print(f'[Debug] Loading expert weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 try:
                     loaded_weight = all_slices[slice_name]
                 except KeyError as e:
@@ -871,7 +871,7 @@ class Qwen3MoeForCausalLM(nn.Module):
             if not loaded:
                 # If local_name weight is not sharded
                 if local_name in all_slices:
-                    print(f'[Debug] Loading weight, local_name={local_name}', flush=True)
+                    # print(f'[Debug] Loading weight, local_name={local_name}', flush=True)
                     loaded_weight = all_slices[local_name]
                     weight_loader = getattr(
                         param, "weight_loader", default_weight_loader

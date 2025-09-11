@@ -168,6 +168,9 @@ def load_weights_with_hf_path_fast(
     # grouped_filenames = list(bin_index_to_file_names[i] for i in weight_name_bins)
 
     print(f"[Debug] len(grouped_local_names) = {len(grouped_local_names)} len(grouped_filenames) = {len(grouped_filenames)}")
+    print(f"[Debug] grouped_local_names = {grouped_local_names}")
+    print(f"[Debug] grouped_filenames = {grouped_filenames}")
+
     if max_workers is None:
         # assume all GPUs are used by SGLang servers
         max_workers = min(8, max(1, os.cpu_count() // torch.cuda.device_count()))
