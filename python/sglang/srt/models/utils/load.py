@@ -67,14 +67,14 @@ def load_weights_with_hf_path_fast(
             hf_names.append("model.embed_tokens.weight")
         if len(hf_names) == 0:
             hf_names.append(local_name)
-        if "model.layers.31.mlp.experts" in local_name:
-            print(f"[Debug] hf_names for {local_name}: {hf_names}")
+        # if "model.layers.31.mlp.experts" in local_name:
+        #     print(f"[Debug] hf_names for {local_name}: {hf_names}")
         for name in hf_names:
             filename = index[name]
             if filename not in local_to_file_map[local_name]:
                 local_to_file_map[local_name].add(filename)
-                if "model.layers.31.mlp.experts" in local_name:
-                    print(f"[Debug] filename for {local_name}: {filename}")
+                # if "model.layers.31.mlp.experts" in local_name:
+                #     print(f"[Debug] filename for {local_name}: {filename}")
 
     # Convert filename lists to sets for faster intersection operations
     # weight_files = {weight: set(files) for weight, files in weight_dict.items()}
