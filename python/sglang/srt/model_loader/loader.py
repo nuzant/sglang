@@ -353,11 +353,7 @@ class DefaultModelLoader(BaseModelLoader):
         self, source: "Source"
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
         """Get an iterator for the model weights based on the load format."""
-        print(f"[Debug] `DefaultModelLoader._get_weights_iterator` from model_or_path={source.model_or_path}", flush=True)
-        tik = time.perf_counter()
         extra_config = self.load_config.model_loader_extra_config
-        print(f"[Debug] Using multithread: {extra_config.get("enable_multithread_load")}", flush=True)
-        print(f"[Debug] Using fast load: {extra_config.get("enable_fast_load")}", flush=True)
         if extra_config.get("enable_fast_load"):
             return source.model_or_path
         
@@ -403,10 +399,6 @@ class DefaultModelLoader(BaseModelLoader):
                 )
             else:
                 weights_iterator = pt_weights_iterator(hf_weights_files)
-        
-        tok = time.perf_counter()
-        print(f"[Debug] `DefaultModelLoader._get_weights_iterator` finished in {tok - tik:.2f} seconds", flush=True)
-        # Apply the prefix.
         return ((source.prefix + name, tensor) for (name, tensor) in weights_iterator)
 
     def _get_all_weights(
@@ -434,9 +426,6 @@ class DefaultModelLoader(BaseModelLoader):
         model_config: ModelConfig,
         device_config: DeviceConfig,
     ) -> nn.Module:
-        print(f"[Debug] `DefaultModelLoader.load_model` from model_path={model_config.model_path}", flush=True)
-        tik = time.perf_counter()
-
         target_device = torch.device(device_config.device)
         with set_default_torch_dtype(model_config.dtype):
             with target_device:
@@ -445,25 +434,18 @@ class DefaultModelLoader(BaseModelLoader):
                     self.load_config,
                 )
 
-        
         extra_config = self.load_config.model_loader_extra_config
         if extra_config.get("enable_fast_load"):
             weights_iter_or_path = model_config.model_path
-            print(f"[Debug] `load_model` using fast load, path={weights_iter_or_path}", flush=True)
         else:
             weights_iter_or_path = self._get_all_weights(model_config, model)
         self.load_weights_and_postprocess(
             model, weights_iter_or_path, target_device, load_config=self.load_config
         )
-        tok = time.perf_counter()
-        print(f"[Debug] `DefaultModelLoader.load_model` finished in {tok - tik:.2f} seconds", flush=True)
         return model.eval()
 
     @staticmethod
     def load_weights_and_postprocess(model, weights, target_device, load_config=None):
-        print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` starts", flush=True)
-        tik = time.perf_counter()
-
         extra_config = load_config.model_loader_extra_config
         if extra_config.get("enable_fast_load"):
             model.load_weights_from_path(weights)
@@ -480,9 +462,6 @@ class DefaultModelLoader(BaseModelLoader):
                 # parameters onto device for processing and back off after.
                 with device_loading_context(module, target_device):
                     quant_method.process_weights_after_loading(module)
-
-        tok = time.perf_counter()
-        print(f"[Debug] `DefaultModelLoader.load_weights_and_postprocess` finished in {tok - tik:.2f} seconds", flush=True)
 
 class LayeredModelLoader(DefaultModelLoader):
     """Model loader that loads weights layer by layer so that one can quantize a

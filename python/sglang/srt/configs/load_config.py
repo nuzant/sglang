@@ -57,7 +57,6 @@ class LoadConfig:
     def __post_init__(self):
         model_loader_extra_config = self.model_loader_extra_config or {}
         if isinstance(model_loader_extra_config, str):
-            print(f"[Debug] model_loader_extra_config={model_loader_extra_config}", flush=True)
             self.model_loader_extra_config = json.loads(model_loader_extra_config)
         self._verify_load_format()
 
