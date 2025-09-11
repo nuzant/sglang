@@ -777,10 +777,6 @@ class Qwen3MoeForCausalLM(nn.Module):
                     # all_slices[name] = f.get_slice(name)
                     all_slices[name] = f.get_tensor(name)
 
-        # print(f"[Debug] expert_param_mappings={self.expert_params_mapping}", flush=True)
-        # print(f"[Debug] Slice names={list(all_slices.keys())}", flush=True)
-        # print(f"[Debug] Local names={local_names}", flush=True)
-
         for local_name in local_names:
             # Skip loading extra bias for GPTQ models.
             if local_name.endswith(".bias") and local_name not in params:
@@ -811,7 +807,6 @@ class Qwen3MoeForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                # print(f'[Debug] Loading sharded weight, local_name={local_name}, slice_name={slice_name}', flush=True)
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
                 loaded = True
@@ -822,12 +817,7 @@ class Qwen3MoeForCausalLM(nn.Module):
                 # If local_name weight is sharded into multiple keys
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
-                # print(f'[Debug] Loading expert weight, local_name={local_name}, slice_name={slice_name}', flush=True)
-                try:
-                    loaded_weight = all_slices[slice_name]
-                except KeyError as e:
-                    print(f"[Error] key error {slice_name} filenames={filenames}", flush=True)
-                    raise e
+                loaded_weight = all_slices[slice_name]
                 weight_loader(
                     param,
                     loaded_weight,
@@ -840,7 +830,6 @@ class Qwen3MoeForCausalLM(nn.Module):
             if not loaded:
                 # If local_name weight is not sharded
                 if local_name in all_slices:
-                    # print(f'[Debug] Loading weight, local_name={local_name}', flush=True)
                     loaded_weight = all_slices[local_name]
                     weight_loader = getattr(
                         param, "weight_loader", default_weight_loader
@@ -851,10 +840,7 @@ class Qwen3MoeForCausalLM(nn.Module):
                 
     def load_weights_from_path(self, path: str):
         # Customized weights loading from a given path of huggingface model
-        import time
         from sglang.srt.models.utils.load import load_weights_with_hf_path_fast
-        print("[Debug] `Qwen3MoeForCausalLM.load_weights_from_path_fast` starts", flush=True)
-        tik = time.perf_counter()
         load_weights_with_hf_path_fast(
             model=self,
             weight_path=path,
@@ -862,14 +848,8 @@ class Qwen3MoeForCausalLM(nn.Module):
             stacked_params_mapping=self.stacked_params_mapping,
             expert_params_mapping=self.expert_params_mapping,
         )
-        tok = time.perf_counter()
-        print(f"[Debug] `Qwen3MoeForCausalLM.load_weights_from_path_fast` finished in {tok - tik:.2f} seconds", flush=True)
 
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
-        import time
-        print("[Debug] `Qwen3MoeForCausalLM.load_weights` starts", flush=True)
-        tik = time.perf_counter()
-
         stacked_params_mapping = [
             # (param_name, shard_name, shard_id)
             ("qkv_proj", "q_proj", "q"),
@@ -885,7 +865,6 @@ class Qwen3MoeForCausalLM(nn.Module):
             ckpt_up_proj_name="up_proj",
             num_experts=self.config.num_experts,
         )
-        print(f"[Debug] expert_params_mapping: {expert_params_mapping}", flush=True)
 
         # Cache params_dict to avoid repeated expensive traversal of model parameters
         if not hasattr(self, "_cached_params_dict"):
@@ -983,11 +962,6 @@ class Qwen3MoeForCausalLM(nn.Module):
                 for layer_id in range(self.start_layer, self.end_layer)
                 if isinstance(self.model.layers[layer_id].mlp, Qwen3MoeSparseMoeBlock)
             }
-
-        tok = time.perf_counter()
-        print(
-            f"[Debug] `Qwen3MoeForCausalLM.load_weights` ends, time cost: {tok - tik:.2f} seconds", flush=True
-        )
 
     @classmethod
     def get_model_config_for_expert_location(cls, config):
