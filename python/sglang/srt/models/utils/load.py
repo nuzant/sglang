@@ -96,6 +96,7 @@ def load_weights_with_hf_path_fast(
         else:
             # All required filenames have existing bins
             # Use the head bin as the master bin, and merge all other bins into the master bin
+            filenames = list(filenames)
             head_i = file_name_to_bin_index[filenames[0]]
             weight_name_bins[head_i].append(local_name)
             if not all(
