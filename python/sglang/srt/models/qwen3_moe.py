@@ -855,7 +855,11 @@ class Qwen3MoeForCausalLM(nn.Module):
                 weight_loader = param.weight_loader
                 slice_name = local_name.replace(param_name, shard_name)
                 print(f'[Debug] Loading expert weight, local_name={local_name}, slice_name={slice_name}', flush=True)
-                loaded_weight = all_slices[slice_name]
+                try:
+                    loaded_weight = all_slices[slice_name]
+                except KeyError as e:
+                    print(f"[Error] key error {slice_name} filenames={filenames}", flush=True)
+                    raise e
                 weight_loader(
                     param,
                     loaded_weight,
