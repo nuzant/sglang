@@ -401,7 +401,7 @@ class DefaultModelLoader(BaseModelLoader):
         extra_config = self.load_config.model_loader_extra_config
         if extra_config.get("enable_fast_load"):
             return source.model_or_path
-        
+
         hf_folder, hf_weights_files, use_safetensors = self._prepare_weights(
             source.model_or_path, source.revision, source.fall_back_to_pt
         )
@@ -507,6 +507,7 @@ class DefaultModelLoader(BaseModelLoader):
                 # parameters onto device for processing and back off after.
                 with device_loading_context(module, target_device):
                     quant_method.process_weights_after_loading(module)
+
 
 class LayeredModelLoader(DefaultModelLoader):
     """Model loader that loads weights layer by layer so that one can quantize a
