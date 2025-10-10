@@ -1,24 +1,24 @@
-import os
 import json
-from glob import glob
-from concurrent.futures import ThreadPoolExecutor
+import os
 from collections import defaultdict
-from typing import Tuple, List, Dict, Callable
+from concurrent.futures import ThreadPoolExecutor
+from glob import glob
+from typing import Callable, Dict, List, Tuple
 
 import torch
 from safetensors import safe_open
-
 from transformers.utils.hub import cached_file
 
 from sglang.srt.model_loader.weight_utils import default_weight_loader
 
+
 def get_actual_hf_path(weight_path: str):
     return os.path.dirname(cached_file(weight_path, "config.json"))
-                
+
 
 def load_weights_with_hf_path_fast(
-    model: torch.nn.Module, 
-    weight_path: str, 
+    model: torch.nn.Module,
+    weight_path: str,
     load_weights_with_worker_fn: Callable,
     stacked_params_mapping: List[Tuple[str, str, str]] | None = None,
     expert_params_mapping: List[Tuple[str, str, str]] | None = None,
@@ -78,11 +78,12 @@ def load_weights_with_hf_path_fast(
     file_groups = {name: local_to_file_map[name] for name in local_names}
     roots = [name for name in local_names]
     ranks = {name: 0 for name in local_names}
+
     def find(x):
         if parent[x] != x:
             parent[x] = find(parent[x])
         return parent[x]
-    
+
     def union(x, y):
         root_x = find(x)
         root_y = find(y)
@@ -107,11 +108,11 @@ def load_weights_with_hf_path_fast(
         return False
 
     for i, weight1 in enumerate(local_names):
-        for weight2 in local_names[i+1:]:
+        for weight2 in local_names[i + 1 :]:
             # If two weights share any files, they conflict
             if any(fn in file_groups[weight1] for fn in file_groups[weight2]):
                 union(weight1, weight2)
-                    
+
     grouped_local_names = [weight_groups[root] for root in roots]
     grouped_filenames = [list(file_groups[root]) for root in roots]
 
@@ -137,4 +138,3 @@ def load_weights_with_hf_path_fast(
         # Consume all results to make result all tasks complete
         for _ in results:
             pass
-            

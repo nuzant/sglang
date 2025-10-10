@@ -414,7 +414,7 @@ class Qwen3ForCausalLM(nn.Module):
     @property
     def end_layer(self):
         return self.model.end_layer
-    
+
     @property
     def stacked_params_mapping(self) -> List[Tuple[str, str, str]]:
         return [
@@ -425,7 +425,7 @@ class Qwen3ForCausalLM(nn.Module):
             ("gate_up_proj", "gate_proj", 0),
             ("gate_up_proj", "up_proj", 1),
         ]
-    
+
     def _load_weights_with_worker(
         self,
         params: Dict[str, torch.nn.Parameter],
@@ -434,8 +434,11 @@ class Qwen3ForCausalLM(nn.Module):
         weight_path: str,
     ):
         import os
-        from sglang.srt.model_loader.weight_utils import default_weight_loader
+
         from safetensors import safe_open
+
+        from sglang.srt.model_loader.weight_utils import default_weight_loader
+
         all_slices = {}
         for filename in filenames:
             safetensor_file = os.path.join(weight_path, filename)
@@ -451,7 +454,10 @@ class Qwen3ForCausalLM(nn.Module):
             # Handle special cases
             if "rotary_emb.inv_freq" in local_name or "projector" in local_name:
                 continue
-            if "rotary_emb.cos_cached" in local_name or "rotary_emb.sin_cached" in local_name:
+            if (
+                "rotary_emb.cos_cached" in local_name
+                or "rotary_emb.sin_cached" in local_name
+            ):
                 # Models trained using ColossalAI may include these tensors in
                 # the checkpoint. Skip them.
                 continue
@@ -474,7 +480,7 @@ class Qwen3ForCausalLM(nn.Module):
                 loaded_weight = all_slices[slice_name]
                 weight_loader(param, loaded_weight, shard_id)
                 loaded = True
-            
+
             if not loaded:
                 # If local_name weight is not sharded
                 if local_name in all_slices:
@@ -484,11 +490,14 @@ class Qwen3ForCausalLM(nn.Module):
                     )
                     weight_loader(param, loaded_weight)
                 else:
-                    raise KeyError(f"Cannot find weight {local_name} in the loaded slices.")
-    
+                    raise KeyError(
+                        f"Cannot find weight {local_name} in the loaded slices."
+                    )
+
     def load_weights_from_path(self, path: str):
         # Customized weights loading from a given path of huggingface model
         from sglang.srt.models.utils.load import load_weights_with_hf_path_fast
+
         load_weights_with_hf_path_fast(
             model=self,
             weight_path=path,
@@ -496,7 +505,7 @@ class Qwen3ForCausalLM(nn.Module):
             stacked_params_mapping=self.stacked_params_mapping,
             tie_word_embeddings=self.config.tie_word_embeddings,
         )
-        
+
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
         stacked_params_mapping = [
             # (param_name, shard_name, shard_id)
