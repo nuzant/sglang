@@ -479,7 +479,6 @@ class DefaultModelLoader(BaseModelLoader):
         )
         return model.eval()
 
-    @debug_function
     @staticmethod
     def load_weights_and_postprocess(model, weights, target_device, load_config=None):
         extra_config = load_config.model_loader_extra_config
