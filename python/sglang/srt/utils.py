@@ -21,6 +21,7 @@ import ctypes
 import dataclasses
 import functools
 import importlib
+import inspect
 import io
 import ipaddress
 import itertools
@@ -3046,3 +3047,51 @@ def numa_bind_to_node(node: int):
 
     libnuma.numa_run_on_node(ctypes.c_int(node))
     libnuma.numa_set_localalloc()
+    
+def debug_function(func: Callable):
+    """Decorator that logs function entry/exit with contextual information."""
+
+    if func is None:
+        raise ValueError("debug_function decorator requires a function")
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        def _resolve_class_name():
+            qualname = getattr(func, "__qualname__", "")
+            if qualname:
+                parts = qualname.split(".")
+                if len(parts) > 1 and parts[-2] != "<locals>":
+                    return parts[-2]
+            if args:
+                instance = args[0]
+                if hasattr(instance, "__class__"):
+                    return instance.__class__.__name__
+            return None
+
+        def _resolve_filename():
+            try:
+                source = inspect.getsourcefile(func) or inspect.getfile(func)
+            except (TypeError, OSError):
+                source = None
+            if source is None:
+                return "<unknown>"
+            return Path(source).name
+
+        class_name = _resolve_class_name()
+        filename = _resolve_filename()
+        display_name = func.__name__
+        if class_name:
+            display_name = f"{class_name}.{display_name}"
+
+        print(f"[Debug] Entering {display_name} (file: {filename})", flush=True)
+
+        start_time = time.perf_counter()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            print(
+                f"[Debug] Exiting {display_name} (file: {filename}) - elapsed {elapsed_ms:.3f} ms"
+            )
+
+    return wrapper
