@@ -62,6 +62,7 @@ from sglang.srt.model_loader.weight_utils import (
     set_runai_streamer_env,
 )
 from sglang.srt.utils import (
+    debug_function,
     get_bool_env_var,
     get_device_capability,
     is_npu,
@@ -299,6 +300,7 @@ class DefaultModelLoader(BaseModelLoader):
             return model_path
         return None
 
+    @debug_function
     def _prepare_weights(
         self, model_name_or_path: str, revision: Optional[str], fall_back_to_pt: bool
     ) -> Tuple[str, List[str], bool]:
@@ -379,6 +381,7 @@ class DefaultModelLoader(BaseModelLoader):
 
         return hf_folder, hf_weights_files, use_safetensors
 
+    @debug_function
     def _get_weights_iterator(
         self, source: "Source"
     ) -> Generator[Tuple[str, torch.Tensor], None, None]:
@@ -431,6 +434,7 @@ class DefaultModelLoader(BaseModelLoader):
                 weights_iterator = pt_weights_iterator(hf_weights_files)
         return ((source.prefix + name, tensor) for (name, tensor) in weights_iterator)
 
+    @debug_function
     def _get_all_weights(
         self,
         model_config: ModelConfig,
@@ -450,6 +454,7 @@ class DefaultModelLoader(BaseModelLoader):
             model_config.model_path, model_config.revision, fall_back_to_pt=True
         )
 
+    @debug_function
     def load_model(
         self,
         *,
@@ -474,6 +479,7 @@ class DefaultModelLoader(BaseModelLoader):
         )
         return model.eval()
 
+    @debug_function
     @staticmethod
     def load_weights_and_postprocess(model, weights, target_device, load_config=None):
         extra_config = load_config.model_loader_extra_config
