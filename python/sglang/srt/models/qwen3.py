@@ -30,7 +30,7 @@ from sglang.srt.model_loader.weight_utils import (
 )
 from sglang.srt.models.qwen2 import Qwen2MLP as Qwen3MLP
 from sglang.srt.models.qwen2 import Qwen2Model
-from sglang.srt.utils import add_prefix, debug_function, is_cuda
+from sglang.srt.utils import add_prefix, is_cuda
 
 Qwen3Config = None
 
@@ -497,7 +497,6 @@ class Qwen3ForCausalLM(nn.Module):
                         f"Cannot find weight {local_name} in the loaded slices."
                     )
 
-    @debug_function
     def load_weights_from_path(self, path: str):
         # Customized weights loading from a given path of huggingface model
         from sglang.srt.models.utils.load import load_weights_with_hf_path_fast
@@ -510,7 +509,6 @@ class Qwen3ForCausalLM(nn.Module):
             tie_word_embeddings=self.config.tie_word_embeddings,
         )
 
-    @debug_function
     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]]):
         stacked_params_mapping = [
             # (param_name, shard_name, shard_id)
