@@ -108,7 +108,6 @@ from sglang.srt.torch_memory_saver_adapter import TorchMemorySaverAdapter
 from sglang.srt.utils import (
     MultiprocessingSerializer,
     cpu_has_amx_support,
-    debug_function,
     dynamic_import,
     enable_show_time_cost,
     get_available_gpu_memory,
@@ -647,7 +646,6 @@ class ModelRunner:
         )
         return min_per_gpu_memory
 
-    @debug_function
     def load_model(self):
         before_avail_memory = get_available_gpu_memory(self.device, self.gpu_id)
         logger.info(
@@ -768,7 +766,6 @@ class ModelRunner:
             rank=self.tp_rank,
         )
 
-    @debug_function
     def update_weights_from_disk(
         self, model_path: str, load_format: str
     ) -> tuple[bool, str]:
